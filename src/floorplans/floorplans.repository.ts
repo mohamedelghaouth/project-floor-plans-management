@@ -5,6 +5,7 @@ import { FloorPlansFilters } from './dto/floorplans-filter.dto';
 import { CreateFloorPlanDto } from './dto/create-floorplan.dto';
 import { ProjectRepository } from 'src/project/project.repository';
 import sharp from 'sharp';
+import { Project } from 'src/project/project.entity';
 
 @Injectable()
 export class FloorPlansRepository extends Repository<FloorPlan> {
@@ -25,11 +26,13 @@ export class FloorPlansRepository extends Repository<FloorPlan> {
     if (projectId) {
       query.andWhere('floor_plan.projectId = :projectId', { projectId });
     }
+    if (name && name.length !== 0) {
+      query.andWhere('LOWER(floor_plan.name) LIKE LOWER(:name)', {
+        name: `%${name}%`,
+      });
+    }
 
     let floorplans = await query
-      .andWhere('LOWER(floor_plan.name) LIKE LOWER(:name)', {
-        name: `%${name}%`,
-      })
       .select([
         'floor_plan.id',
         'floor_plan.name',
@@ -43,25 +46,24 @@ export class FloorPlansRepository extends Repository<FloorPlan> {
   }
 
   async createFloorPlan(
-    createFloorPlanDto: CreateFloorPlanDto,
+    project: Project,
     imageBuffer: Buffer,
+    name: string,
   ): Promise<FloorPlan> {
-    const { projectId, name } = createFloorPlanDto;
-
-    let project = await this.projectRepository.findOneBy({ id: projectId });
-
-    if (!project) {
-      throw new NotFoundException(
-        `project with ID ${projectId} is not Found. a floor plan should be linked to a project`,
-      );
-    }
-
     let floorPlan = this.create({
       name,
       project,
       originalFile: imageBuffer,
-      smallerVersionOfOriginalFile: await this.resizeImage(imageBuffer, 100, 100),
-      biggerVersionOfOriginalFile: await this.resizeImage(imageBuffer, 2000, 2000)
+      smallerVersionOfOriginalFile: await this.resizeImage(
+        imageBuffer,
+        100,
+        100,
+      ),
+      biggerVersionOfOriginalFile: await this.resizeImage(
+        imageBuffer,
+        2000,
+        2000,
+      ),
     });
 
     project.floorPlans.push(floorPlan);
@@ -72,7 +74,9 @@ export class FloorPlansRepository extends Repository<FloorPlan> {
   }
 
   async resizeImage(originalFile: Buffer, width, height): Promise<Buffer> {
-     let smallerVersion = await sharp(originalFile).resize(width, height).toBuffer()
-    return smallerVersion
+    let smallerVersion = await sharp(originalFile)
+      .resize(width, height)
+      .toBuffer();
+    return smallerVersion;
   }
 }

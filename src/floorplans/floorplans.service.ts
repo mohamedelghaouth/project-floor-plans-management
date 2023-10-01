@@ -3,10 +3,14 @@ import { FloorPlansRepository } from './floorplans.repository';
 import { FloorPlansFilters } from './dto/floorplans-filter.dto';
 import { FloorPlan } from './floorplans.entity';
 import { CreateFloorPlanDto } from './dto/create-floorplan.dto';
+import { ProjectService } from 'src/project/project.service';
 
 @Injectable()
 export class FloorplansService {
-  constructor(private floorPlansRepository: FloorPlansRepository) {}
+  constructor(
+    private floorPlansRepository: FloorPlansRepository,
+    private projectService: ProjectService,
+  ) {}
 
   getFloorPlans(floorPlansFilter: FloorPlansFilters): Promise<FloorPlan[]> {
     return this.floorPlansRepository.getFloorPlans(floorPlansFilter);
@@ -41,13 +45,26 @@ export class FloorplansService {
     return found;
   }
 
-  createFloorPlan(
+  async createFloorPlan(
     createFloorPlanDto: CreateFloorPlanDto,
-    imageBuffer: Buffer,
+    image: Express.Multer.File,
   ): Promise<FloorPlan> {
+    const { projectId, name } = createFloorPlanDto;
+
+    const project = await this.projectService.getProjectById(projectId);
+
+    if (!project) {
+      throw new NotFoundException(
+        `project with ID ${projectId} is not Found. a floor plan should be linked to a project`,
+      );
+    }
+
+    const imageName = name && name.length !== 0 ? name : image.originalname;
+
     return this.floorPlansRepository.createFloorPlan(
-      createFloorPlanDto,
-      imageBuffer,
+      project,
+      image.buffer,
+      imageName,
     );
   }
 

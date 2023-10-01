@@ -1,12 +1,17 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { IsNotEmpty } from "class-validator";
+import { ApiProperty } from '@nestjs/swagger';
+import { IsNotEmpty } from 'class-validator';
 
-export class CreateFloorPlanDto{
-    @ApiProperty()
-    @IsNotEmpty()
-    projectId: string;
+export class CreateFloorPlanDto {
+  @ApiProperty({
+    type: 'string',
+    required: true,
+  })
+  @IsNotEmpty()
+  projectId: string;
 
-    @ApiProperty()
-    @IsNotEmpty()
-    name: string;
+  @ApiProperty({
+    type: 'string',
+    required: false,
+  })
+  name: string;
 }

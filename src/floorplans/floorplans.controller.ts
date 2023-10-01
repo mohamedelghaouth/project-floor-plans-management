@@ -23,7 +23,7 @@ import { UpdateFloorPlansDto } from './dto/update-floorplan.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Readable } from 'stream';
 import { Response } from 'express';
-import { ApiBody, ApiConsumes, ApiProperty, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('floorplans')
 @Controller('floorplans')
@@ -47,51 +47,51 @@ export class FloorplansController {
   @Get('/:id/image')
   async getFloorPlanOriginalImage(
     @Param('id', new ParseUUIDPipe({ version: '4' })) floorPlanID: string,
-    @Res({ passthrough: true }) response: Response
+    @Res({ passthrough: true }) response: Response,
   ): Promise<StreamableFile> {
     const floorPlan = await this.floorplansService.getFloorPlan(floorPlanID);
-    
+
     const stream = Readable.from(floorPlan.originalFile);
-    
+
     response.set({
-        'Content-Disposition': `inline; filename="${floorPlan.name}"`,
-        'Content-Type': 'image'
-    })
- 
+      'Content-Disposition': `inline; filename="${floorPlan.name}"`,
+      'Content-Type': 'image',
+    });
+
     return new StreamableFile(stream);
   }
 
   @Get('/:id/image/bigger')
   async getFloorPlanOriginalImageBiggerVersion(
     @Param('id', new ParseUUIDPipe({ version: '4' })) floorPlanID: string,
-    @Res({ passthrough: true }) response: Response
+    @Res({ passthrough: true }) response: Response,
   ): Promise<StreamableFile> {
     const floorPlan = await this.floorplansService.getFloorPlan(floorPlanID);
-    
+
     const stream = Readable.from(floorPlan.biggerVersionOfOriginalFile);
-    
+
     response.set({
-        'Content-Disposition': `inline; filename="${floorPlan.name}"`,
-        'Content-Type': 'image'
-    })
- 
+      'Content-Disposition': `inline; filename="${floorPlan.name}"`,
+      'Content-Type': 'image',
+    });
+
     return new StreamableFile(stream);
   }
 
   @Get('/:id/image/small')
   async getFloorPlanOriginalImageSmallerVersion(
     @Param('id', new ParseUUIDPipe({ version: '4' })) floorPlanID: string,
-    @Res({ passthrough: true }) response: Response
+    @Res({ passthrough: true }) response: Response,
   ): Promise<StreamableFile> {
     const floorPlan = await this.floorplansService.getFloorPlan(floorPlanID);
-    
+
     const stream = Readable.from(floorPlan.smallerVersionOfOriginalFile);
-    
+
     response.set({
-        'Content-Disposition': `inline; filename="${floorPlan.name}"`,
-        'Content-Type': 'image'
-    })
- 
+      'Content-Disposition': `inline; filename="${floorPlan.name}"`,
+      'Content-Type': 'image',
+    });
+
     return new StreamableFile(stream);
   }
 
@@ -102,7 +102,7 @@ export class FloorplansController {
     schema: {
       type: 'object',
       properties: {
-        projectId: { type: 'string' },
+        projectId: { required: ['true'], type: 'string' },
         name: { type: 'string' },
         file: {
           type: 'string',
@@ -122,10 +122,7 @@ export class FloorplansController {
     )
     file: Express.Multer.File,
   ): Promise<FloorPlan> {
-    return this.floorplansService.createFloorPlan(
-      createFloorPlanDto,
-      file.buffer,
-    );
+    return this.floorplansService.createFloorPlan(createFloorPlanDto, file);
   }
 
   @Patch('/:id/name')
